@@ -23,9 +23,9 @@
    ```bash
    python -m venv .venv
     #Linux
-    source .venv/bin/activate
+   source .venv/bin/activate
     #Windous
-    .venv\Scripts\activate.bat
+   .venv\Scripts\activate.bat
    ```
 
 2. Установите зависимости:
