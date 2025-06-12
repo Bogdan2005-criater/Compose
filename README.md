@@ -19,7 +19,6 @@
    ```bash
    git clone https://github.com/Bogdan2005-criater/Compose.git
    cd Compose
-````
 2. Создайте и зайдите в виртуальное окружение:
    ```bash
    python -m venv .venv
