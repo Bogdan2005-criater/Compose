@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Прогнозирование свойств композитов</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold text-center mb-8 text-blue-800">Прогнозирование свойств композитных материалов</h1>
+        
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+            <form id="prediction-form" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for key, value in default_values.items() %}
+                <div class="form-group">
+                <label for="{{ key }}" class="block text-sm font-medium text-gray-700 mb-1">{{ key }}</label>
+                <input 
+                        type="number" 
+                        step="0.01"
+                        id="{{ key }}" 
+                        name="{{ key }}" 
+                        value="{{ value }}"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        required>
+                </div>
+                {% endfor %}
+                
+                <div class="md:col-span-2 lg:col-span-3 flex justify-center mt-4">
+                <button 
+                        type="submit" 
+                        class="px-6 py-3 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    >
+                        Рассчитать свойства
+                </button>
+                </div>
+            </form>
+        </div>
+        
+        <div id="results" class="hidden bg-white rounded-lg shadow-lg p-6">
+            <h2 class="text-2xl font-semibold mb-4 text-green-700">Результаты прогнозирования</h2>
+            
+            <div class="mb-6">
+                <h3 class="text-xl font-medium mb-3 text-blue-700">Механические свойства композита:</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="property-card"><span class="property-label">Модуль упругости при растяжении:</span><span id="modulus-value" class="property-value">-</span>
+                    <span class="property-unit">ГПа</span>
+                    </div>
+                    <div class="property-card">
+                     <span class="property-label">Прочность при растяжении:</span>
+                     <span id="strength-value" class="property-value">-</span>
+                     <span class="property-unit">МПа</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div>
+                <h3 class="text-xl font-medium mb-3 text-blue-700">Рекомендации:</h3>
+                <div class="property-card">
+                 <span class="property-label">Оптимальное соотношение матрица-наполнитель:</span>
+                 <span id="ratio-value" class="property-value">-</span>
+                </div>
+            </div>
+        </div>
+        
+        <div id="error" class="hidden bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mt-6 rounded">
+            <p id="error-message"></p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('prediction-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+
+            document.getElementById('results').classList.add('hidden');
+            document.getElementById('error').classList.add('hidden');
+            
+
+            const button = document.querySelector('button[type="submit"]');
+            const originalText = button.textContent;
+            button.textContent = 'Расчет...';
+            button.disabled = true;
+            
+            try {
+
+                const formData = new FormData(this);
+                const formDataObject = {};
+                formData.forEach((value, key) => {
+                    formDataObject[key] = value;
+                });
+                
+
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams(formDataObject).toString()
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                  document.getElementById('modulus-value').textContent = result.properties['Модуль упругости при растяжении, ГПа'];
+                 document.getElementById('strength-value').textContent = result.properties['Прочность при растяжении, МПа'];
+                 document.getElementById('ratio-value').textContent = result.ratio;
+                 
+                 document.getElementById('results').classList.remove('hidden');
+                } else {
+
+                 document.getElementById('error-message').textContent = 'Ошибка: ' + result.error;
+                 document.getElementById('error').classList.remove('hidden');
+                }
+            } catch (error) {
+                document.getElementById('error-message').textContent = 'Ошибка сети: ' + error.message;
+                document.getElementById('error').classList.remove('hidden');
+            } finally {
+                button.textContent = originalText;
+                button.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
